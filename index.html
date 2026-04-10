@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Batear — Open-Source Acoustic Drone Detection</title>
+  <meta name="description" content="Ultra-low-cost, edge-only acoustic drone detection on ESP32-S3 with encrypted LoRa alerting. Open-source civil defense technology.">
+  <meta property="og:title" content="Batear — Open-Source Acoustic Drone Detection">
+  <meta property="og:description" content="Ultra-low-cost, edge-only acoustic drone detection on ESP32-S3 with encrypted LoRa alerting.">
+  <meta property="og:image" content="icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://batear.io">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" type="image/png" href="icon.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'bat-white': '#ffffff',
+            'bat-light': '#f8f9fa',
+            'bat-card': '#ffffff',
+            'bat-blue': '#00A3FF',
+            'bat-blue-dark': '#0080cc',
+            'bat-gray': '#6b7280',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(0, 163, 255, 0.4); }
+      50% { box-shadow: 0 0 20px 4px rgba(0, 163, 255, 0.15); }
+    }
+    .animate-fade-in-up { animation: fadeInUp 0.6s ease-out both; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .animate-pulse-glow { animation: pulseGlow 3s ease-in-out infinite; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f8f9fa; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  </style>
+</head>
+<body class="bg-bat-white text-gray-700 font-sans">
+
+  <!-- NAV -->
+  <nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      <a href="#" class="flex items-center gap-2">
+        <img src="icon.png" alt="Batear" class="h-8 w-8">
+        <span class="text-gray-900 font-bold text-lg">Batear</span>
+      </a>
+      <div class="hidden md:flex items-center gap-6">
+        <a href="#features" data-i18n="nav.features" class="text-bat-gray hover:text-gray-900 transition-colors text-sm">Features</a>
+        <a href="https://docs.batear.io" data-i18n="nav.docs" class="text-bat-gray hover:text-gray-900 transition-colors text-sm">Docs</a>
+        <a href="https://opencollective.com/batear" data-i18n="nav.donate" class="text-bat-gray hover:text-gray-900 transition-colors text-sm">Donate</a>
+        <select id="lang-switcher" class="bg-bat-light border border-gray-200 rounded px-2 py-1 text-sm text-gray-700 focus:border-bat-blue focus:outline-none cursor-pointer">
+          <option value="en">English</option>
+          <option value="zh">繁體中文</option>
+          <option value="uk">Українська</option>
+        </select>
+      </div>
+      <button id="mobile-menu-btn" class="md:hidden text-gray-600 hover:text-gray-900" aria-label="Toggle menu">
+        <i data-lucide="menu" class="w-6 h-6"></i>
+      </button>
+    </div>
+    <div id="mobile-menu" class="hidden md:hidden border-t border-gray-200 bg-white/95 backdrop-blur-md px-4 pb-4 pt-2 space-y-3">
+      <a href="#features" data-i18n="nav.features" class="block text-bat-gray hover:text-gray-900 transition-colors text-sm py-1">Features</a>
+      <a href="https://docs.batear.io" data-i18n="nav.docs" class="block text-bat-gray hover:text-gray-900 transition-colors text-sm py-1">Docs</a>
+      <a href="https://opencollective.com/batear" data-i18n="nav.donate" class="block text-bat-gray hover:text-gray-900 transition-colors text-sm py-1">Donate</a>
+      <select id="lang-switcher-mobile" class="w-full bg-bat-light border border-gray-200 rounded px-2 py-1.5 text-sm text-gray-700 focus:border-bat-blue focus:outline-none cursor-pointer mt-2">
+        <option value="en">English</option>
+        <option value="zh">繁體中文</option>
+        <option value="uk">Українська</option>
+      </select>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="pt-32 pb-20 px-4">
+    <div class="max-w-4xl mx-auto text-center">
+      <img src="icon.png" alt="Batear Logo" class="w-20 h-20 mx-auto mb-8 animate-fade-in-up">
+      <h1 data-i18n="hero.headline" class="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6 animate-fade-in-up delay-100">
+        Built for defense, hoping it becomes unnecessary.
+      </h1>
+      <p data-i18n="hero.subheadline" class="text-lg md:text-xl text-bat-gray max-w-2xl mx-auto mb-10 animate-fade-in-up delay-200">
+        Open-source acoustic drone detection for civil defense. Real-time protection, zero cloud costs.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center flex-wrap animate-fade-in-up delay-300">
+        <a href="https://docs.batear.io/flasher/" class="inline-flex items-center justify-center gap-2 bg-bat-blue hover:bg-bat-blue-dark text-white font-semibold px-8 py-3 rounded-lg transition-colors animate-pulse-glow">
+          <i data-lucide="zap" class="w-5 h-5"></i>
+          <span data-i18n="hero.cta_flasher">Web Flasher</span>
+        </a>
+        <a href="https://docs.batear.io" class="inline-flex items-center justify-center gap-2 border border-bat-blue text-bat-blue hover:bg-bat-blue/10 font-semibold px-8 py-3 rounded-lg transition-colors">
+          <i data-lucide="book-open" class="w-5 h-5"></i>
+          <span data-i18n="hero.cta_docs">Explore Documentation</span>
+        </a>
+        <a href="https://opencollective.com/batear" class="inline-flex items-center justify-center gap-2 border border-bat-blue text-bat-blue hover:bg-bat-blue/10 font-semibold px-8 py-3 rounded-lg transition-colors">
+          <i data-lucide="heart" class="w-5 h-5"></i>
+          <span data-i18n="hero.cta_sponsor">Sponsor the Mission</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- IMPACT BANNER -->
+  <section class="py-6 bg-blue-50 border-y border-blue-100">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+      <p class="text-bat-blue font-medium flex items-center justify-center gap-2">
+        <i data-lucide="shield-check" class="w-5 h-5 flex-shrink-0"></i>
+        <span data-i18n="impact.text">Proudly fiscally hosted by Open Source Collective. Your 501(c)(3) tax-deductible donations directly support open-source civil defense.</span>
+      </p>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section id="features" class="py-20 px-4">
+    <div class="max-w-6xl mx-auto">
+      <h2 data-i18n="features.title" class="text-3xl font-bold text-gray-900 text-center mb-12">Why Batear?</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="bg-bat-card border border-gray-200 rounded-xl p-6 hover:border-bat-blue/50 transition-all duration-200 hover:scale-[1.02] shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-bat-blue/10 rounded-lg">
+              <i data-lucide="cpu" class="w-6 h-6 text-bat-blue"></i>
+            </div>
+            <h3 data-i18n="feature.fft.title" class="text-xl font-semibold text-gray-900">Edge FFT Processing</h3>
+          </div>
+          <p data-i18n="feature.fft.desc" class="text-bat-gray leading-relaxed">
+            Real-time spectral analysis runs entirely on the ESP32-S3. No cloud round-trips, no latency — detection in milliseconds.
+          </p>
+        </div>
+
+        <div class="bg-bat-card border border-gray-200 rounded-xl p-6 hover:border-bat-blue/50 transition-all duration-200 hover:scale-[1.02] shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-bat-blue/10 rounded-lg">
+              <i data-lucide="radio" class="w-6 h-6 text-bat-blue"></i>
+            </div>
+            <h3 data-i18n="feature.lora.title" class="text-xl font-semibold text-gray-900">Encrypted LoRa Alerts</h3>
+          </div>
+          <p data-i18n="feature.lora.desc" class="text-bat-gray leading-relaxed">
+            AES-128-GCM encrypted packets over LoRa sub-GHz. Designed for contested RF environments with anti-jamming resilience.
+          </p>
+        </div>
+
+        <div class="bg-bat-card border border-gray-200 rounded-xl p-6 hover:border-bat-blue/50 transition-all duration-200 hover:scale-[1.02] shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-bat-blue/10 rounded-lg">
+              <i data-lucide="house" class="w-6 h-6 text-bat-blue"></i>
+            </div>
+            <h3 data-i18n="feature.ha.title" class="text-xl font-semibold text-gray-900">Home Assistant Ready</h3>
+          </div>
+          <p data-i18n="feature.ha.desc" class="text-bat-gray leading-relaxed">
+            MQTT auto-discovery means plug-and-play integration. Trigger automations, log events, and monitor your airspace from your dashboard.
+          </p>
+        </div>
+
+        <div class="bg-bat-card border border-gray-200 rounded-xl p-6 hover:border-bat-blue/50 transition-all duration-200 hover:scale-[1.02] shadow-sm">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="p-2 bg-bat-blue/10 rounded-lg">
+              <i data-lucide="circuit-board" class="w-6 h-6 text-bat-blue"></i>
+            </div>
+            <h3 data-i18n="feature.hw.title" class="text-xl font-semibold text-gray-900">Hardware Flexibility</h3>
+          </div>
+          <p data-i18n="feature.hw.desc" class="text-bat-gray leading-relaxed">
+            Supports Heltec WiFi LoRa 32 V3 out of the box, with a board abstraction layer ready for LILYGO PoE and other ESP32-S3 variants.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FIELD TESTING -->
+  <section class="py-20 px-4 bg-bat-light">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-600 border border-amber-200 px-4 py-1.5 rounded-full text-sm font-medium mb-6">
+        <i data-lucide="map-pin" class="w-4 h-4"></i>
+        <span data-i18n="field.badge">Active Field Testing</span>
+      </div>
+      <h2 data-i18n="field.title" class="text-3xl font-bold text-gray-900 mb-6">Proven Under Pressure</h2>
+      <p data-i18n="field.desc" class="text-bat-gray text-lg max-w-2xl mx-auto mb-8 leading-relaxed">
+        Batear is being field-tested in collaboration with Ukrainian defense experts in active electronic warfare environments. Our partners' identities remain confidential for their safety.
+      </p>
+      <div class="flex justify-center">
+        <a href="https://hackaday.com/2026/03/23/acoustic-drone-detection-on-the-cheap-with-esp32/" target="_blank" rel="noopener" class="inline-flex items-center gap-2 text-bat-gray hover:text-gray-900 transition-colors">
+          <i data-lucide="external-link" class="w-4 h-4"></i>
+          <span data-i18n="field.hackaday">Featured on Hackaday</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="py-12 px-4 border-t border-gray-200">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+        <a href="#" class="flex items-center gap-2">
+          <img src="icon.png" alt="Batear" class="h-6 w-6">
+          <span class="text-gray-900 font-semibold">Batear</span>
+        </a>
+        <div class="flex items-center gap-5">
+          <a href="https://github.com/batear-io/batear" target="_blank" rel="noopener" class="text-bat-gray hover:text-gray-900 transition-colors" aria-label="GitHub">
+            <i data-lucide="github" class="w-5 h-5"></i>
+          </a>
+          <a href="https://x.com/TheBatear" target="_blank" rel="noopener" class="text-bat-gray hover:text-gray-900 transition-colors" aria-label="X (Twitter)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          </a>
+          <a href="https://www.linkedin.com/company/batear" target="_blank" rel="noopener" class="text-bat-gray hover:text-gray-900 transition-colors" aria-label="LinkedIn">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+        </div>
+        <div class="text-bat-gray text-sm text-center md:text-right">
+          <p data-i18n="footer.copyright">&copy; 2026 TN666. MIT License.</p>
+          <p data-i18n="footer.osc" class="text-xs mt-1">Fiscally hosted by Open Source Collective</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    // ── i18n Translations ──
+    const translations = {
+      en: {
+        'nav.features': 'Features',
+        'nav.docs': 'Docs',
+        'nav.donate': 'Donate',
+        'hero.headline': 'Built for defense, hoping it becomes unnecessary.',
+        'hero.subheadline': 'Open-source acoustic drone detection for civil defense. Real-time protection, zero cloud costs.',
+        'hero.cta_flasher': 'Web Flasher',
+        'hero.cta_docs': 'Explore Documentation',
+        'hero.cta_sponsor': 'Sponsor the Mission',
+        'impact.text': 'Proudly fiscally hosted by Open Source Collective. Your 501(c)(3) tax-deductible donations directly support open-source civil defense.',
+        'features.title': 'Why Batear?',
+        'feature.fft.title': 'Edge FFT Processing',
+        'feature.fft.desc': 'Real-time spectral analysis runs entirely on the ESP32-S3. No cloud round-trips, no latency \u2014 detection in milliseconds.',
+        'feature.lora.title': 'Encrypted LoRa Alerts',
+        'feature.lora.desc': 'AES-128-GCM encrypted packets over LoRa sub-GHz. Designed for contested RF environments with anti-jamming resilience.',
+        'feature.ha.title': 'Home Assistant Ready',
+        'feature.ha.desc': 'MQTT auto-discovery means plug-and-play integration. Trigger automations, log events, and monitor your airspace from your dashboard.',
+        'feature.hw.title': 'Hardware Flexibility',
+        'feature.hw.desc': 'Supports Heltec WiFi LoRa 32 V3 out of the box, with a board abstraction layer ready for LILYGO PoE and other ESP32-S3 variants.',
+        'field.badge': 'Active Field Testing',
+        'field.title': 'Proven Under Pressure',
+        'field.desc': 'Batear is being field-tested in collaboration with Ukrainian defense experts in active electronic warfare environments. Our partners\u2019 identities remain confidential for their safety.',
+        'field.hackaday': 'Featured on Hackaday',
+        'footer.copyright': '\u00a9 2026 TN666. MIT License.',
+        'footer.osc': 'Fiscally hosted by Open Source Collective',
+      },
+      zh: {
+        'nav.features': '\u529f\u80fd\u7279\u9ede',
+        'nav.docs': '\u6587\u4ef6',
+        'nav.donate': '\u8d0a\u52a9',
+        'hero.headline': '\u70ba\u9632\u79a6\u800c\u751f\uff0c\u613f\u5b83\u6c38\u9060\u4e0d\u5fc5\u6d3e\u4e0a\u7528\u5834\u3002',
+        'hero.subheadline': '開源聲學無人機偵測系統，專為民防打造。即時防護，零雲端成本。',
+        'hero.cta_flasher': '線上燒錄器',
+        'hero.cta_docs': '\u63a2\u7d22\u6587\u4ef6',
+        'hero.cta_sponsor': '\u8d0a\u52a9\u6b64\u4efb\u52d9',
+        'impact.text': '由 Open Source Collective 提供財務託管。您的 501(c)(3) 免稅捐款直接支持開源民防技術。',
+        'features.title': '\u70ba\u4ec0\u9ebc\u9078\u64c7 Batear\uff1f',
+        'feature.fft.title': '\u908a\u7de3 FFT \u8655\u7406',
+        'feature.fft.desc': '\u5373\u6642\u983b\u8b5c\u5206\u6790\u5b8c\u5168\u5728 ESP32-S3 \u4e0a\u904b\u884c\u3002\u7121\u96f2\u7aef\u5f80\u8fd4\u3001\u7121\u5ef6\u9072 \u2014 \u6beb\u79d2\u7d1a\u5075\u6e2c\u3002',
+        'feature.lora.title': '\u52a0\u5bc6 LoRa \u8b66\u5831',
+        'feature.lora.desc': '\u900f\u904e LoRa \u6b21 GHz \u983b\u6bb5\u50b3\u8f38 AES-128-GCM \u52a0\u5bc6\u5c01\u5305\u3002\u5c08\u70ba\u722d\u8b70\u6027\u5c04\u983b\u74b0\u5883\u8a2d\u8a08\uff0c\u5177\u5099\u6297\u5e72\u64fe\u80fd\u529b\u3002',
+        'feature.ha.title': 'Home Assistant \u5c31\u7dd2',
+        'feature.ha.desc': 'MQTT \u81ea\u52d5\u767c\u73fe\uff0c\u5373\u63d2\u5373\u7528\u3002\u89f8\u767c\u81ea\u52d5\u5316\u3001\u8a18\u9304\u4e8b\u4ef6\uff0c\u5f9e\u5100\u8868\u677f\u76e3\u63a7\u60a8\u7684\u7a7a\u57df\u3002',
+        'feature.hw.title': '\u786c\u9ad4\u5f48\u6027',
+        'feature.hw.desc': '開箱即支援 Heltec WiFi LoRa 32 V3，並具備板級抽象層，可擴展至 LILYGO PoE 及其他 ESP32-S3 變體。',
+        'field.badge': '\u5be6\u5730\u6e2c\u8a66\u4e2d',
+        'field.title': '\u7d93\u904e\u58d3\u529b\u9a57\u8b49',
+        'field.desc': 'Batear \u6b63\u8207\u70cf\u514b\u862d\u9632\u79a6\u5c08\u5bb6\u5408\u4f5c\uff0c\u5728\u6d3b\u8e8d\u7684\u96fb\u5b50\u6230\u74b0\u5883\u4e2d\u9032\u884c\u5be6\u5730\u6e2c\u8a66\u3002\u70ba\u4fdd\u8b77\u5408\u4f5c\u5925\u4f34\u7684\u5b89\u5168\uff0c\u5176\u8eab\u4efd\u4fdd\u5bc6\u3002',
+        'field.hackaday': 'Hackaday \u5c08\u984c\u5831\u5c0e',
+        'footer.copyright': '\u00a9 2026 TN666\u3002MIT \u6388\u6b0a\u3002',
+        'footer.osc': '\u7531 Open Source Collective \u63d0\u4f9b\u8ca1\u52d9\u8a17\u7ba1',
+      },
+      uk: {
+        'nav.features': '\u041c\u043e\u0436\u043b\u0438\u0432\u043e\u0441\u0442\u0456',
+        'nav.docs': '\u0414\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0456\u044f',
+        'nav.donate': '\u041f\u0456\u0434\u0442\u0440\u0438\u043c\u0430\u0442\u0438',
+        'hero.headline': '\u0421\u0442\u0432\u043e\u0440\u0435\u043d\u043e \u0434\u043b\u044f \u0437\u0430\u0445\u0438\u0441\u0442\u0443, \u0437 \u043d\u0430\u0434\u0456\u0454\u044e, \u0449\u043e \u0446\u0435 \u0441\u0442\u0430\u043d\u0435 \u043d\u0435\u043f\u043e\u0442\u0440\u0456\u0431\u043d\u0438\u043c.',
+        'hero.subheadline': '\u0412\u0456\u0434\u043a\u0440\u0438\u0442\u0430 \u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u0430\u043a\u0443\u0441\u0442\u0438\u0447\u043d\u043e\u0433\u043e \u0432\u0438\u044f\u0432\u043b\u0435\u043d\u043d\u044f \u0434\u0440\u043e\u043d\u0456\u0432 \u0434\u043b\u044f \u0446\u0438\u0432\u0456\u043b\u044c\u043d\u043e\u0457 \u043e\u0431\u043e\u0440\u043e\u043d\u0438. \u0417\u0430\u0445\u0438\u0441\u0442 \u0443 \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u043c\u0443 \u0447\u0430\u0441\u0456, \u043d\u0443\u043b\u044c \u0445\u043c\u0430\u0440\u043d\u0438\u0445 \u0432\u0438\u0442\u0440\u0430\u0442.',
+        'hero.cta_flasher': 'Web-\u043f\u0440\u043e\u0448\u0438\u0432\u0430\u0447',
+        'hero.cta_docs': '\u041f\u0435\u0440\u0435\u0433\u043b\u044f\u043d\u0443\u0442\u0438 \u0434\u043e\u043a\u0443\u043c\u0435\u043d\u0442\u0430\u0446\u0456\u044e',
+        'hero.cta_sponsor': '\u041f\u0456\u0434\u0442\u0440\u0438\u043c\u0430\u0442\u0438 \u043c\u0456\u0441\u0456\u044e',
+        'impact.text': '\u0424\u0456\u0441\u043a\u0430\u043b\u044c\u043d\u043e \u0440\u043e\u0437\u043c\u0456\u0449\u0435\u043d\u043e Open Source Collective. \u0412\u0430\u0448\u0456 \u043f\u043e\u0436\u0435\u0440\u0442\u0432\u0438 501(c)(3) \u0431\u0435\u0437\u043f\u043e\u0441\u0435\u0440\u0435\u0434\u043d\u044c\u043e \u043f\u0456\u0434\u0442\u0440\u0438\u043c\u0443\u044e\u0442\u044c \u0432\u0456\u0434\u043a\u0440\u0438\u0442\u0443 \u0446\u0438\u0432\u0456\u043b\u044c\u043d\u0443 \u043e\u0431\u043e\u0440\u043e\u043d\u0443.',
+        'features.title': '\u0427\u043e\u043c\u0443 Batear?',
+        'feature.fft.title': '\u041e\u0431\u0440\u043e\u0431\u043a\u0430 FFT \u043d\u0430 \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u0457',
+        'feature.fft.desc': '\u0421\u043f\u0435\u043a\u0442\u0440\u0430\u043b\u044c\u043d\u0438\u0439 \u0430\u043d\u0430\u043b\u0456\u0437 \u0443 \u0440\u0435\u0430\u043b\u044c\u043d\u043e\u043c\u0443 \u0447\u0430\u0441\u0456 \u043f\u043e\u0432\u043d\u0456\u0441\u0442\u044e \u043d\u0430 ESP32-S3. \u0411\u0435\u0437 \u0445\u043c\u0430\u0440\u043d\u0438\u0445 \u0437\u0430\u043f\u0438\u0442\u0456\u0432, \u0431\u0435\u0437 \u0437\u0430\u0442\u0440\u0438\u043c\u043a\u0438 \u2014 \u0432\u0438\u044f\u0432\u043b\u0435\u043d\u043d\u044f \u0437\u0430 \u043c\u0456\u043b\u0456\u0441\u0435\u043a\u0443\u043d\u0434\u0438.',
+        'feature.lora.title': '\u0417\u0430\u0448\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0456 LoRa \u0441\u043f\u043e\u0432\u0456\u0449\u0435\u043d\u043d\u044f',
+        'feature.lora.desc': '\u0428\u0438\u0444\u0440\u043e\u0432\u0430\u043d\u0456 \u043f\u0430\u043a\u0435\u0442\u0438 AES-128-GCM \u0447\u0435\u0440\u0435\u0437 LoRa \u0441\u0443\u0431-\u0413\u0413\u0446. \u0420\u043e\u0437\u0440\u043e\u0431\u043b\u0435\u043d\u043e \u0434\u043b\u044f \u043a\u043e\u043d\u043a\u0443\u0440\u0435\u043d\u0442\u043d\u0438\u0445 \u0420\u0427-\u0441\u0435\u0440\u0435\u0434\u043e\u0432\u0438\u0449 \u0437 \u0441\u0442\u0456\u0439\u043a\u0456\u0441\u0442\u044e \u0434\u043e \u0433\u043b\u0443\u0448\u0456\u043d\u043d\u044f.',
+        'feature.ha.title': 'Home Assistant \u0433\u043e\u0442\u043e\u0432\u0438\u0439',
+        'feature.ha.desc': '\u0410\u0432\u0442\u043e\u0432\u0438\u044f\u0432\u043b\u0435\u043d\u043d\u044f MQTT \u2014 \u043f\u0456\u0434\u043a\u043b\u044e\u0447\u0438\u0432 \u0456 \u043f\u0440\u0430\u0446\u044e\u0454. \u0417\u0430\u043f\u0443\u0441\u043a\u0430\u0439\u0442\u0435 \u0430\u0432\u0442\u043e\u043c\u0430\u0442\u0438\u0437\u0430\u0446\u0456\u0457, \u0444\u0456\u043a\u0441\u0443\u0439\u0442\u0435 \u043f\u043e\u0434\u0456\u0457 \u0442\u0430 \u0441\u043f\u043e\u0441\u0442\u0435\u0440\u0456\u0433\u0430\u0439\u0442\u0435 \u0437\u0430 \u043f\u043e\u0432\u0456\u0442\u0440\u044f\u043d\u0438\u043c \u043f\u0440\u043e\u0441\u0442\u043e\u0440\u043e\u043c.',
+        'feature.hw.title': '\u0413\u043d\u0443\u0447\u043a\u0456\u0441\u0442\u044c \u0430\u043f\u0430\u0440\u0430\u0442\u043d\u043e\u0433\u043e \u0437\u0430\u0431\u0435\u0437\u043f\u0435\u0447\u0435\u043d\u043d\u044f',
+        'feature.hw.desc': '\u041f\u0456\u0434\u0442\u0440\u0438\u043c\u0443\u0454 Heltec WiFi LoRa 32 V3 \u0437 \u043a\u043e\u0440\u043e\u0431\u043a\u0438, \u0437 \u0440\u0456\u0432\u043d\u0435\u043c \u0430\u0431\u0441\u0442\u0440\u0430\u043a\u0446\u0456\u0457 \u043f\u043b\u0430\u0442 \u0434\u043b\u044f LILYGO PoE \u0442\u0430 \u0456\u043d\u0448\u0438\u0445 \u0432\u0430\u0440\u0456\u0430\u043d\u0442\u0456\u0432 ESP32-S3.',
+        'field.badge': '\u0410\u043a\u0442\u0438\u0432\u043d\u0456 \u043f\u043e\u043b\u044c\u043e\u0432\u0456 \u0432\u0438\u043f\u0440\u043e\u0431\u0443\u0432\u0430\u043d\u043d\u044f',
+        'field.title': '\u041f\u0435\u0440\u0435\u0432\u0456\u0440\u0435\u043d\u043e \u043f\u0456\u0434 \u0442\u0438\u0441\u043a\u043e\u043c',
+        'field.desc': 'Batear \u043f\u0440\u043e\u0445\u043e\u0434\u0438\u0442\u044c \u043f\u043e\u043b\u044c\u043e\u0432\u0456 \u0432\u0438\u043f\u0440\u043e\u0431\u0443\u0432\u0430\u043d\u043d\u044f \u0443 \u0441\u043f\u0456\u0432\u043f\u0440\u0430\u0446\u0456 \u0437 \u0443\u043a\u0440\u0430\u0457\u043d\u0441\u044c\u043a\u0438\u043c\u0438 \u0435\u043a\u0441\u043f\u0435\u0440\u0442\u0430\u043c\u0438 \u0437 \u043e\u0431\u043e\u0440\u043e\u043d\u0438 \u0432 \u0443\u043c\u043e\u0432\u0430\u0445 \u0430\u043a\u0442\u0438\u0432\u043d\u043e\u0457 \u0440\u0430\u0434\u0456\u043e\u0435\u043b\u0435\u043a\u0442\u0440\u043e\u043d\u043d\u043e\u0457 \u0431\u043e\u0440\u043e\u0442\u044c\u0431\u0438. \u041e\u0441\u043e\u0431\u0438\u0441\u0442\u0456\u0441\u0442\u044c \u043f\u0430\u0440\u0442\u043d\u0435\u0440\u0456\u0432 \u0437\u0430\u043b\u0438\u0448\u0430\u0454\u0442\u044c\u0441\u044f \u043a\u043e\u043d\u0444\u0456\u0434\u0435\u043d\u0446\u0456\u0439\u043d\u043e\u044e \u0434\u043b\u044f \u0457\u0445\u043d\u044c\u043e\u0457 \u0431\u0435\u0437\u043f\u0435\u043a\u0438.',
+        'field.hackaday': '\u041f\u0443\u0431\u043b\u0456\u043a\u0430\u0446\u0456\u044f \u043d\u0430 Hackaday',
+        'footer.copyright': '\u00a9 2026 TN666. \u041b\u0456\u0446\u0435\u043d\u0437\u0456\u044f MIT.',
+        'footer.osc': '\u0424\u0456\u0441\u043a\u0430\u043b\u044c\u043d\u043e \u0440\u043e\u0437\u043c\u0456\u0449\u0435\u043d\u043e Open Source Collective',
+      }
+    };
+
+    // ── Language Switcher ──
+    function setLanguage(lang) {
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (translations[lang] && translations[lang][key]) {
+          el.textContent = translations[lang][key];
+        }
+      });
+      document.documentElement.lang = lang === 'zh' ? 'zh-Hant' : lang;
+      localStorage.setItem('batear-lang', lang);
+      document.querySelectorAll('#lang-switcher, #lang-switcher-mobile').forEach(function(sel) {
+        sel.value = lang;
+      });
+    }
+
+    document.querySelectorAll('#lang-switcher, #lang-switcher-mobile').forEach(function(sel) {
+      sel.addEventListener('change', function(e) {
+        setLanguage(e.target.value);
+      });
+    });
+
+    var savedLang = localStorage.getItem('batear-lang');
+    var browserLang = navigator.language.toLowerCase();
+    var defaultLang = savedLang || (browserLang.startsWith('zh') ? 'zh' : browserLang.startsWith('uk') ? 'uk' : 'en');
+    setLanguage(defaultLang);
+
+    // ── Mobile Menu ──
+    var menuBtn = document.getElementById('mobile-menu-btn');
+    var mobileMenu = document.getElementById('mobile-menu');
+    menuBtn.addEventListener('click', function() {
+      mobileMenu.classList.toggle('hidden');
+      var icon = menuBtn.querySelector('[data-lucide]');
+      icon.setAttribute('data-lucide', mobileMenu.classList.contains('hidden') ? 'menu' : 'x');
+      lucide.createIcons();
+    });
+
+    // Close mobile menu when a link is clicked
+    mobileMenu.querySelectorAll('a').forEach(function(link) {
+      link.addEventListener('click', function() {
+        mobileMenu.classList.add('hidden');
+        var icon = menuBtn.querySelector('[data-lucide]');
+        icon.setAttribute('data-lucide', 'menu');
+        lucide.createIcons();
+      });
+    });
+
+    // ── Init Lucide ──
+    lucide.createIcons();
+  </script>
+
+</body>
+</html>
